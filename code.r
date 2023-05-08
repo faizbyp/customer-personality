@@ -47,7 +47,7 @@ dataCust <- data.frame(data$Age, data$Education, data$Marital_Status, data$Incom
 library(mice)
 md.pattern(dataCust)
 
-#Mengisi missing
+#Menghapus record dengan missing value
 library("tidyr")
 dataCust <- dataCust %>% drop_na()
 
