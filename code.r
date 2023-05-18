@@ -30,15 +30,15 @@ dataCust <- data.frame(data$Age, data$Marital_Status, data$Children, data$Educat
 #Memilih Marital_Status yang bernilai Single dan Married
 dataCust <- subset.data.frame(dataCust, data.Marital_Status=="Single" | data.Marital_Status=="Married")
 
-#Pembersihan Data
 #Cek missing value
-library(mice)
 md.pattern(dataCust)
+
+#Hapus outliers
+dataCust <- subset(dataCust, dataCust$data.Income < 600000)
 
 #Isi nilai missing value
 dataCust$data.Income[is.na(dataCust$data.Income)] <- mean(dataCust$data.Income, na.rm= TRUE)
 md.pattern(dataCust)
-
 
 str(dataCust)
 
@@ -57,7 +57,6 @@ dataCust$data.Education <- as.integer(dataCust$data.Education)
 dataCust$data.Marital_Status[which(dataCust$data.Marital_Status=="Single")] <- 1
 dataCust$data.Marital_Status[which(dataCust$data.Marital_Status=="Married")] <- 2
 dataCust$data.Marital_Status <- as.integer(dataCust$data.Marital_Status)
-
 
 summary(dataCust)
 
@@ -79,3 +78,36 @@ dataCust$data.MntMeatProducts <- normalize(dataCust$data.MntMeatProducts)
 dataCust$data.MntFishProducts <- normalize(dataCust$data.MntFishProducts)
 dataCust$data.MntSweetProducts <- normalize(dataCust$data.MntSweetProducts)
 dataCust$data.MntGoldProds <- normalize(dataCust$data.MntGoldProds)
+
+### MENENTUKAN JUMLAH CLUSTER ###
+library(cluster)
+
+# Menyiapkan data
+data_norm <- data.frame(
+  Age = dataCust$data.Age,
+  Marital_Status = dataCust$data.Marital_Status,
+  Children = dataCust$data.Children,
+  Education = dataCust$data.Education,
+  Seniority = dataCust$data.Seniority,
+  Income = dataCust$data.Income,
+  Spending = dataCust$data.Spending,
+  MntWines = dataCust$data.MntWines,
+  MntFruits = dataCust$data.MntFruits,
+  MntMeatProducts = dataCust$data.MntMeatProducts,
+  MntFishProducts = dataCust$data.MntFishProducts,
+  MntSweetProducts = dataCust$data.MntSweetProducts,
+  MntGoldProds = dataCust$data.MntGoldProds
+)
+
+# Menghitung WCSS untuk berbagai jumlah kluster
+wcss <- vector()
+for (i in 1:10) {
+  kmeans_fit <- kmeans(data_norm, centers = i, nstart = 10)
+  wcss[i] <- kmeans_fit$tot.withinss
+}
+
+# Menampilkan grafik elbow method
+plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
+
+# K-means Clustering
+(result<- kmeans(data_norm, 4))
