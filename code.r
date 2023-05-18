@@ -30,16 +30,6 @@ dataCust <- data.frame(data$Age, data$Marital_Status, data$Children, data$Educat
 #Memilih Marital_Status yang bernilai Single dan Married
 dataCust <- subset.data.frame(dataCust, data.Marital_Status=="Single" | data.Marital_Status=="Married")
 
-#Pembersihan Data
-#Cek missing value
-library(mice)
-md.pattern(dataCust)
-
-
-#Menghapus record dengan missing value
-library("tidyr")
-dataCust <- dataCust %>% drop_na()
-
 #Cek missing value
 md.pattern(dataCust)
 
@@ -49,7 +39,6 @@ dataCust <- subset(dataCust, dataCust$data.Income < 600000)
 #Isi nilai missing value
 dataCust$data.Income[is.na(dataCust$data.Income)] <- mean(dataCust$data.Income, na.rm= TRUE)
 md.pattern(dataCust)
-
 
 str(dataCust)
 
@@ -68,7 +57,6 @@ dataCust$data.Education <- as.integer(dataCust$data.Education)
 dataCust$data.Marital_Status[which(dataCust$data.Marital_Status=="Single")] <- 1
 dataCust$data.Marital_Status[which(dataCust$data.Marital_Status=="Married")] <- 2
 dataCust$data.Marital_Status <- as.integer(dataCust$data.Marital_Status)
-
 
 summary(dataCust)
 
@@ -90,7 +78,6 @@ dataCust$data.MntMeatProducts <- normalize(dataCust$data.MntMeatProducts)
 dataCust$data.MntFishProducts <- normalize(dataCust$data.MntFishProducts)
 dataCust$data.MntSweetProducts <- normalize(dataCust$data.MntSweetProducts)
 dataCust$data.MntGoldProds <- normalize(dataCust$data.MntGoldProds)
-
 
 ### MENENTUKAN JUMLAH CLUSTER ###
 library(cluster)
@@ -124,4 +111,3 @@ plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
 
 # K-means Clustering
 (result<- kmeans(data_norm, 4))
-
