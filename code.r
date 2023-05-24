@@ -223,7 +223,7 @@ for (i in 1:10) {
 plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
 
 # Menerapkan algoritme kmeans pada MeatEducation
-MeatEd_km <- kmeans(MeatEd, 3, nstart = 25)
+MeatEd_km <- kmeans(MeatEd, 2, nstart = 25)
 print(MeatEd_km)
 
 # Menggabungkan hasil klasterisasi dengan dataset MeatEducation
@@ -235,7 +235,7 @@ MeatEd_clustered$Cluster <- factor(MeatEd_clustered$Cluster)
 # Plot hasil klasterisasi dengan label yang sesuai
 ggplot(MeatEd_clustered, aes(x = dataCust$data.MntMeatProducts, y = dataCust$data.Education, color = Cluster)) +
   geom_point() +
-  scale_color_manual(values = rainbow(3)) +
+  scale_color_manual(values = rainbow(2)) +
   theme_bw() +
   labs(x = "Pembelian Produk Meat", y = "Education")
 
@@ -376,11 +376,11 @@ for (i in 1:10) {
 # Menampilkan grafik elbow method
 plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
 
-# Menerapkan algoritme kmeans pada MeatMarital_Status
+# Menerapkan algoritme kmeans pada FishMarital_Status
 FishMS_km <- kmeans(FishMS, 2, nstart = 25)
 print(FishMS_km)
 
-# Menggabungkan hasil klasterisasi dengan dataset MeatMarital_Status
+# Menggabungkan hasil klasterisasi dengan dataset FishMarital_Status
 FishMS_clustered <- data.frame(FishMS, Cluster = FishMS_km$cluster)
 
 # Convert Cluster variable ke factor
@@ -411,7 +411,7 @@ plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
 FishCn_km <- kmeans(FishCn, 6, nstart = 25)
 print(FishCn_km)
 
-# Menggabungkan hasil klasterisasi dengan dataset MeatChildren
+# Menggabungkan hasil klasterisasi dengan dataset FishChildren
 FishCn_clustered <- data.frame(FishCn, Cluster = FishCn_km$cluster)
 
 # Convert Cluster variable ke factor
@@ -439,7 +439,7 @@ for (i in 1:10) {
 plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
 
 # Menerapkan algoritme kmeans pada FishEducation
-FishEd_km <- kmeans(FishEd, 4, nstart = 25)
+FishEd_km <- kmeans(FishEd, 2, nstart = 25)
 print(FishEd_km)
 
 # Menggabungkan hasil klasterisasi dengan dataset FishEducation
@@ -451,7 +451,7 @@ FishEd_clustered$Cluster <- factor(FishEd_clustered$Cluster)
 # Plot hasil klasterisasi dengan label yang sesuai
 ggplot(FishEd_clustered, aes(x = dataCust$data.MntFishProducts, y = dataCust$data.Education, color = Cluster)) +
   geom_point() +
-  scale_color_manual(values = rainbow(4)) +
+  scale_color_manual(values = rainbow(2)) +
   theme_bw() +
   labs(x = "Pembelian Produk Fish", y = "Education")
 
