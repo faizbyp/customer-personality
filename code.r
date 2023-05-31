@@ -1,9 +1,19 @@
+# Libraries
+library(cluster)
+library(factoextra)
+library(ggplot2)
+library(ggplotify)
+library(dplyr)
+library(utils)
+library(plotly)
+
+
 # Baca data
-data <- read.csv("marketing_campaign.csv", sep = "\t", header=TRUE)
+data <- read.csv("marketing_campaign.csv", sep = "\t", header = TRUE)
 
 ### PRAPROSES DATA ###
 
-#Membuat atribut age untuk mengetahui usia customer
+# Membuat atribut age untuk mengetahui usia customer
 data$Age <- NULL
 data$Age <- 2023-data$Year_Birth
 
@@ -22,23 +32,27 @@ now <- as.Date('1-5-2023',format='%d-%m-%Y')
 data$Dt_Customer <- as.Date(data$Dt_Customer, format='%d-%m-%Y')
 data$Seniority <- as.integer(now - data$Dt_Customer)
 
+
 # Memilih atribut yang diperlukan
-dataCust <- data.frame(data$Age, data$Marital_Status, data$Children, data$Education, data$Seniority,
-                       data$Income, data$Spending, data$MntWines, data$MntFruits, data$MntMeatProducts,
-                       data$MntFishProducts, data$MntSweetProducts, data$MntGoldProds)
+dataCust <- data %>%
+  select(Age, Marital_Status, Children, Education, Seniority, Income, Spending,
+         MntWines, MntFruits, MntMeatProducts, MntFishProducts, MntSweetProducts, MntGoldProds)
 
 # Memilih Marital_Status yang bernilai Single dan Married
-dataCust <- subset.data.frame(dataCust, data.Marital_Status=="Single" | data.Marital_Status=="Married")
+dataCust <- subset(dataCust, Marital_Status %in% c("Single", "Married"))
+
+# Diskretisasi Atribut Age 
+# 1 = Dewasa (27-61); 2 = Lansia (62-96); 3 = Manula (97-130)
+dataCust$Age <- as.numeric(dataCust$Age)
+dataCust$Age <- cut(dataCust$Age, breaks = c(0, 61, 96, 130), labels = c(1, 2, 3))
 
 # Cek missing value
 library(mice)
 md.pattern(dataCust)
 
-# Hapus outliers
-dataCust <- subset(dataCust, dataCust$data.Income < 600000)
 
 # Isi nilai missing value
-dataCust$data.Income[is.na(dataCust$data.Income)] <- mean(dataCust$data.Income, na.rm= TRUE)
+dataCust$Income[is.na(dataCust$Income)] <- mean(dataCust$Income, na.rm = TRUE)
 md.pattern(dataCust)
 
 str(dataCust)
@@ -46,503 +60,176 @@ str(dataCust)
 # Inisialisasi Data Kategorik
 # Atribut Education
 # 1=undergraduated; 2=postgraduated
-dataCust$data.Education[which(dataCust$data.Education=="Basic")] <- 1
-dataCust$data.Education[which(dataCust$data.Education=="2n Cycle")] <- 1
-dataCust$data.Education[which(dataCust$data.Education=="Graduation")] <- 2
-dataCust$data.Education[which(dataCust$data.Education=="Master")] <- 2
-dataCust$data.Education[which(dataCust$data.Education=="PhD")] <- 2
-dataCust$data.Education <- as.integer(dataCust$data.Education)
+dataCust$Education[which(dataCust$Education=="Basic")] <- 1
+dataCust$Education[which(dataCust$Education=="2n Cycle")] <- 1
+dataCust$Education[which(dataCust$Education=="Graduation")] <- 2
+dataCust$Education[which(dataCust$Education=="Master")] <- 2
+dataCust$Education[which(dataCust$Education=="PhD")] <- 2
+dataCust$Education <- as.integer(dataCust$Education)
 
 # Atribut Marital Status
 # 1=Single; 2=Married
-dataCust$data.Marital_Status[which(dataCust$data.Marital_Status=="Single")] <- 1
-dataCust$data.Marital_Status[which(dataCust$data.Marital_Status=="Married")] <- 2
-dataCust$data.Marital_Status <- as.integer(dataCust$data.Marital_Status)
+dataCust$Marital_Status <- recode(dataCust$Marital_Status, "Single" = 1, "Married" = 2)
+dataCust$Marital_Status <- as.integer(dataCust$Marital_Status)
+
 
 summary(dataCust)
+str(dataCust)
 
 # Normalisasi
 normalize <- function(x) {
   return ((x - min(x)) / (max(x) - min(x)))
 }
+dataCust$Income <- normalize(dataCust$Income)
+dataCust$Spending <- normalize(dataCust$Spending)
+dataCust$MntWines <- normalize(dataCust$MntWines)
+dataCust$MntFruits <- normalize(dataCust$MntFruits)
+dataCust$MntMeatProducts <- normalize(dataCust$MntMeatProducts)
+dataCust$MntFishProducts <- normalize(dataCust$MntFishProducts)
+dataCust$MntSweetProducts <- normalize(dataCust$MntSweetProducts)
+dataCust$MntGoldProds <- normalize(dataCust$MntGoldProds)
 
-dataCust$data.Age <- normalize(dataCust$data.Age)
-dataCust$data.Marital_Status <- normalize(dataCust$data.Marital_Status)
-dataCust$data.Children <- normalize(dataCust$data.Children)
-dataCust$data.Education <- normalize(dataCust$data.Education)
-dataCust$data.Seniority <- normalize(dataCust$data.Seniority)
-dataCust$data.Income <- normalize(dataCust$data.Income)
-dataCust$data.Spending <- normalize(dataCust$data.Spending)
-dataCust$data.MntWines <- normalize(dataCust$data.MntWines)
-dataCust$data.MntFruits <- normalize(dataCust$data.MntFruits)
-dataCust$data.MntMeatProducts <- normalize(dataCust$data.MntMeatProducts)
-dataCust$data.MntFishProducts <- normalize(dataCust$data.MntFishProducts)
-dataCust$data.MntSweetProducts <- normalize(dataCust$data.MntSweetProducts)
-dataCust$data.MntGoldProds <- normalize(dataCust$data.MntGoldProds)
+### MENENTUKAN SEGMENTASI JUMLAH CLUSTER ###
 
-### MENENTUKAN JUMLAH CLUSTER ###
-library(cluster)
+# Mengubah tipe data Age, Marital_Status, dan Children menjadi numerik
+dataCust$Age <- as.numeric(as.character(dataCust$Age))
+dataCust$Marital_Status <- as.numeric(dataCust$Marital_Status)
+dataCust$Children <- as.numeric(dataCust$Children)
 
-# Menyiapkan data
-data_norm <- data.frame(
-  Age = dataCust$data.Age,
-  Marital_Status = dataCust$data.Marital_Status,
-  Children = dataCust$data.Children,
-  Education = dataCust$data.Education,
-  Seniority = dataCust$data.Seniority,
-  Income = dataCust$data.Income,
-  Spending = dataCust$data.Spending,
-  MntWines = dataCust$data.MntWines,
-  MntFruits = dataCust$data.MntFruits,
-  MntMeatProducts = dataCust$data.MntMeatProducts,
-  MntFishProducts = dataCust$data.MntFishProducts,
-  MntSweetProducts = dataCust$data.MntSweetProducts,
-  MntGoldProds = dataCust$data.MntGoldProds
-)
+# Standarisasi atribut numerik
+dataCust[, c("Income", "Spending", "MntWines", "MntFruits", "MntMeatProducts", "MntFishProducts", "MntSweetProducts", "MntGoldProds")] <- scale(dataCust[, c("Income", "Spending", "MntWines", "MntFruits", "MntMeatProducts", "MntFishProducts", "MntSweetProducts", "MntGoldProds")])
 
-# Menghitung WCSS untuk berbagai jumlah kluster
-wcss <- vector()
-for (i in 1:10) {
-  kmeans_fit <- kmeans(data_norm, centers = i, nstart = 10)
-  wcss[i] <- kmeans_fit$tot.withinss
-}
+# Metode Elbow
+df_wss <- data.frame(Clusters = 1:10, WSS = wss)
+ggplot(df_wss, aes(x = Clusters, y = WSS)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Number of Clusters", y = "Total Within-Cluster Sum of Squares") +
+  ggtitle("Elbow Method") +
+  theme_minimal()
 
-# Menampilkan grafik elbow method
-plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
+set.seed(123)
 
-# K-means Clustering
-(result<- kmeans(data_norm, 4))
+# K-Means dengan k =3
+jumlah_cluster <- 3  # Ganti dengan jumlah cluster optimal 
+kmeans_model <- kmeans(dataCust, centers = jumlah_cluster)
+print(kmeans_model)
 
-library(factoextra)
+dataCust$Cluster <- as.factor(kmeans_model$cluster)
+table(dataCust$Cluster)
+
+# hasil
+# cluster 1 = 447 pelanggan
+# cluster 2 = 460 pelanggan
+# cluster 3 = 437 pelanggan
+
+### Visualisasi jumlah pelanggan dengan ketiga cluster
+pie_data <- table(dataCust$Cluster)
+pie_chart <- plot_ly(labels = names(pie_data), values = pie_data, type = "pie") %>%
+  layout(title = "Pie Chart of Customer Segmentation")
+pie_chart
+
+# Analisis Deskriptif
+# Statistik ringkasan untuk setiap cluster
+summary_data <- aggregate(dataCust[, c("Age", "Marital_Status", "Children", "Income", "Spending", "MntWines", "MntFruits", "MntMeatProducts", "MntFishProducts", "MntSweetProducts", "MntGoldProds")], 
+                          by = list(dataCust$Cluster), FUN = mean)
+summary_data <- summary_data[, -1]  
+
+# Jumlah kategori produk tiap cluster
+
+product_purchases <- dataCust %>%
+  group_by(Cluster) %>%
+  summarize(
+    Total_Wines = sum(MntWines),
+    Total_Fruits = sum(MntFruits),
+    Total_MeatProducts = sum(MntMeatProducts),
+    Total_FishProducts = sum(MntFishProducts),
+    Total_SweetProducts = sum(MntSweetProducts),
+    Total_GoldProds = sum(MntGoldProds)
+  )
+print(product_purchases)
+
+## kesimpulan 
+## Pada cluster 1 memiliki pembelian produk yang relatif rendah untuk semua kategori produk, terdapat
+## penurunan dalam pembelian Total_Wines, Total_Fruits, Total_MeatProducts, Total_FishProducts, Total_SweetProducts, dan Total_GoldProds dibandingkan dengan rata-rata total pembelian.
+## Cluster 2 memiliki pembelian produk yang relatif tinggi untuk sebagian kategori produk. Menunjukkan peningkatan
+## signifikan dalam pembelian Total_Wines, Total_Fruits, Total_MeatProducts, Total_FishProducts, Total_SweetProducts, dan Total_GoldProds dibandingkan dengan rata-rata total pembelian. 
+## Cluster 3  memiliki pembelian produk yang rendah untuk beberapa kategori produk, terutama Total_Wines, Total_MeatProducts, Total_FishProducts, dan Total_SweetProducts. Hanya pada kategori Total_Fruits dan Total_GoldProds terdapat sedikit peningkatan dalam pembelian dibandingkan dengan rata-rata total pembelian
+
+# Visualisasi jumlah pelanggan berdasarkan atribut age di setiap cluster
+age_cluster_data <- as.data.frame.table(age_cluster_data)
+names(age_cluster_data) <- c("Age", "Cluster", "Frequency")
+
+# Membuat bar plot menggunakan ggplot
+ggplot(age_cluster_data, aes(x = Age, y = Frequency, fill = Cluster)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Age", y = "Frequency", fill = "Cluster") +
+  ggtitle("Bar Plot of Age by Cluster") +
+  theme_minimal()
+
+
+# Visualisasi Box Plot Income dengan ketiga cluster
+ggplot(dataCust, aes(x = Cluster, y = Income)) +
+  geom_boxplot() +
+  labs(x = "Cluster", y = "Income") +
+  ggtitle("Box Plot of Income by Cluster") +
+  theme_minimal()
+## kesimpulan =
+## Pemasukan di cluster 1 lebih rendah.
+## Median pada boxplot menujukkan median pendapatan pada ketiga cluster realtif serupa.
+## Upper whisker yang lebih panjang pada cluster 3 menujukkan bahwa adanya beberapa pelanggan di cluster 3 yang memiliki pendapatan lebih tinggi dibandingkan dengan mayoritas pelanggan di cluster tersebut.
+
+# Visualisasi Box Plot Spending dengan ketiga cluster
+ggplot(dataCust, aes(x = Cluster, y = Spending)) +
+  geom_boxplot() +
+  labs(x = "Cluster", y = "Spending") +
+  ggtitle("Box Plot of Spending by Cluster") +
+  theme_minimal()
+## kesimpulan =
+## terdapat perbedaan dalam pola pengeluaran antara ketiga cluster.
+## Cluster 2 cenderung memiliki pengluaran lebih tinggi sedangkan cluster 3 paling rendah.
+## Outliers pada boxplot menunjukkan pada cluster 2 tidak memiliki perbedaan
+## yang signifikan dalam pola pengeluaran dibanding cluster 1 dan 3.
+## Cluster 2 memiliki variabilitas lebih besar dalam pengeluaran dibandingkan dengan cluster 1 dan 3.
+
+# Visualisasi Scatter Plot Income dan Spending ketiga cluster pelanggan
 library(ggplot2)
-
-### CUSTOMER PERSONALITY UNTUK PEMBELIAN MEAT PRODUCTS ###
-### 1. Menggabungkan data produk meat dan age berdasarkan urutan baris ###
-MeatAge <- cbind(dataCust$data.MntMeatProducts, dataCust$data.Age)
-
-# Menghitung WCSS untuk berbagai jumlah kluster
-wcss <- vector()
-for (i in 1:10) {
-  kmeans_fit <- kmeans(MeatAge, centers = i, nstart = 10)
-  wcss[i] <- kmeans_fit$tot.withinss
-}
-
-# Menampilkan grafik elbow method
-plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
-
-# Menerapkan algoritme kmeans pada MeatAge
-MeatAge_km <- kmeans(MeatAge, 4, nstart = 25)
-print(MeatAge_km)
-
-# Menggabungkan hasil klasterisasi dengan dataset MeatAge
-MeatAge_clustered <- data.frame(MeatAge, Cluster = MeatAge_km$cluster)
-
-# Convert Cluster variable ke factor
-MeatAge_clustered$Cluster <- factor(MeatAge_clustered$Cluster)
-
-# Plot hasil klasterisasi dengan label yang sesuai
-ggplot(MeatAge_clustered, aes(x = dataCust$data.MntMeatProducts, y = dataCust$data.Age, color = Cluster)) +
+ggplot(dataCust, aes(x = Income, y = Spending, color = Cluster)) +
   geom_point() +
-  scale_color_manual(values = rainbow(4)) +
-  theme_bw() +
-  labs(x = "Pembelian Produk Meat", y = "Age")
+  labs(x = "Income", y = "Spending", color = "Cluster") +
+  ggtitle("Scatter Plot of Income vs. Spending by Cluster") +
+  theme_minimal()
+## kesimpulan = terlihat titik-titik dalam setiap cluster menaik
+## seiring dengan naiknya pendapatan dan pengeluaran.
+## Menujukkan adanya hubungan positif anatara pendapatan dan pengeluaran.
 
-### 2. Menggabungkan data produk meat dan marital_Status berdasarkan urutan baris ###
-MeatMS <- cbind(dataCust$data.MntMeatProducts, dataCust$data.Marital_Status)
+##Cluster 1: Pada cluster ini, terdapat titik-titik yang cenderung berada pada pendapatan rendah dan pengeluaran menengah.
+##Cluster 2: Pada cluster ini, terdapat titik-titik yang berada pada pendapatan menengah dan pengeluaran paling tinggi.
+##Cluster 3: Pada cluster ini, terdapat titik-titik yang cenderung berada pada pendapatan tinggi dan pengeluaran paling rendah.
 
-# Menghitung WCSS untuk berbagai jumlah kluster
-wcss <- vector()
-for (i in 1:10) {
-  kmeans_fit <- kmeans(MeatMS, centers = i, nstart = 10)
-  wcss[i] <- kmeans_fit$tot.withinss
-}
 
-# Menampilkan grafik elbow method
-plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
+# Visualisasi Bar Plot
+barplot_data <- table(dataCust$Cluster, dataCust$Marital_Status)
+barplot(barplot_data, beside = TRUE, legend = TRUE,
+        main = "Bar Plot of Marital Status by Cluster",
+        xlab = "Cluster", ylab = "Frequency")
+##kesimpulan = Pada barplot terlihat kategori married memiliki tinggi batang yang lebih dari kategori single
+## Menunjukkakn proporsi individu pelanggan yang memiliki status perkawinan menikah / married lebih tinggi dari yang belum menikah / single
+## Terdapat sedikit perbedaan dalam frekuensi antara kategori married dan single di setiap cluster, namun tidak signifikan.
 
-# Menerapkan algoritme kmeans pada MeatMarital_Status
-MeatMS_km <- kmeans(MeatMS, 2, nstart = 25)
-print(MeatMS_km)
 
-# Menggabungkan hasil klasterisasi dengan dataset MeatMarital_Status
-MeatMS_clustered <- data.frame(MeatMS, Cluster = MeatMS_km$cluster)
-
-# Convert Cluster variable ke factor
-MeatMS_clustered$Cluster <- factor(MeatMS_clustered$Cluster)
-
-# Plot hasil klasterisasi dengan label yang sesuai
-ggplot(MeatMS_clustered, aes(x = dataCust$data.MntMeatProducts, y = dataCust$data.Marital_Status, color = Cluster)) +
+# Visualisasi Scatter Plot Seniority Vs. Spending di ketiga cluster
+ggplot(dataCust, aes(x = Spending, y = Seniority, color = Cluster)) +
   geom_point() +
-  scale_color_manual(values = rainbow(4)) +
-  theme_bw() +
-  labs(x = "Pembelian Produk Meat", y = "Marital Status")
+  labs(x = "Spending", y = "Seniority", color = "Cluster") +
+  ggtitle("Scatter Plot of Seniority vs. Spending by Cluster") +
+  theme_minimal()
+## kesimpulan = terlihat titik-titik dalam setiap cluster semakin menyebar jika jumlah pembelian
+## produknya (spending) semakin banyak
+## Tidak menunjukkan adanya hubungan khusus antara lama pelanggan menjadi member (Seniority) dan total pembelian produk (Spending)
 
 
-### 3. Menggabungkan data produk meat dan Children berdasarkan urutan baris ###
-MeatCn <- cbind(dataCust$data.MntMeatProducts, dataCust$data.Children)
 
-# Menghitung WCSS untuk berbagai jumlah kluster
-wcss <- vector()
-for (i in 1:10) {
-  kmeans_fit <- kmeans(MeatCn, centers = i, nstart = 10)
-  wcss[i] <- kmeans_fit$tot.withinss
-}
 
-# Menampilkan grafik elbow method
-plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
 
-# Menerapkan algoritme kmeans pada MeatChildren
-MeatCn_km <- kmeans(MeatCn, 4, nstart = 25)
-print(MeatCn_km)
-
-# Menggabungkan hasil klasterisasi dengan dataset MeatChildren
-MeatCn_clustered <- data.frame(MeatCn, Cluster = MeatCn_km$cluster)
-
-# Convert Cluster variable ke factor
-MeatCn_clustered$Cluster <- factor(MeatCn_clustered$Cluster)
-
-# Plot hasil klasterisasi dengan label yang sesuai
-ggplot(MeatCn_clustered, aes(x = dataCust$data.MntMeatProducts, y = dataCust$data.Children, color = Cluster)) +
-  geom_point() +
-  scale_color_manual(values = rainbow(4)) +
-  theme_bw() +
-  labs(x = "Pembelian Produk Meat", y = "Children")
-
-
-### 4. Menggabungkan data produk meat dan Education berdasarkan urutan baris ###
-MeatEd <- cbind(dataCust$data.MntMeatProducts, dataCust$data.Education)
-
-# Menghitung WCSS untuk berbagai jumlah kluster
-wcss <- vector()
-for (i in 1:10) {
-  kmeans_fit <- kmeans(MeatEd, centers = i, nstart = 10)
-  wcss[i] <- kmeans_fit$tot.withinss
-}
-
-# Menampilkan grafik elbow method
-plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
-
-# Menerapkan algoritme kmeans pada MeatEducation
-MeatEd_km <- kmeans(MeatEd, 2, nstart = 25)
-print(MeatEd_km)
-
-# Menggabungkan hasil klasterisasi dengan dataset MeatEducation
-MeatEd_clustered <- data.frame(MeatEd, Cluster = MeatEd_km$cluster)
-
-# Convert Cluster variable ke factor
-MeatEd_clustered$Cluster <- factor(MeatEd_clustered$Cluster)
-
-# Plot hasil klasterisasi dengan label yang sesuai
-ggplot(MeatEd_clustered, aes(x = dataCust$data.MntMeatProducts, y = dataCust$data.Education, color = Cluster)) +
-  geom_point() +
-  scale_color_manual(values = rainbow(2)) +
-  theme_bw() +
-  labs(x = "Pembelian Produk Meat", y = "Education")
-
-
-### 5. Menggabungkan data produk meat dan Seniority berdasarkan urutan baris ###
-MeatSn <- cbind(dataCust$data.MntMeatProducts, dataCust$data.Seniority)
-
-# Menghitung WCSS untuk berbagai jumlah kluster
-wcss <- vector()
-for (i in 1:10) {
-  kmeans_fit <- kmeans(MeatSn, centers = i, nstart = 10)
-  wcss[i] <- kmeans_fit$tot.withinss
-}
-
-# Menampilkan grafik elbow method
-plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
-
-# Menerapkan algoritme kmeans pada MeatSeniority
-MeatSn_km <- kmeans(MeatSn, 7, nstart = 25)
-print(MeatSn_km)
-
-# Menggabungkan hasil klasterisasi dengan dataset MeatSeniority
-MeatSn_clustered <- data.frame(MeatSn, Cluster = MeatSn_km$cluster)
-
-# Convert Cluster variable ke factor
-MeatSn_clustered$Cluster <- factor(MeatSn_clustered$Cluster)
-
-# Plot hasil klasterisasi dengan label yang sesuai
-ggplot(MeatSn_clustered, aes(x = dataCust$data.MntMeatProducts, y = dataCust$data.Seniority, color = Cluster)) +
-  geom_point() +
-  scale_color_manual(values = rainbow(7)) +
-  theme_bw() +
-  labs(x = "Pembelian Produk Meat", y = "Seniority (Member)")
-
-
-### 6. Menggabungkan data produk meat dan Income berdasarkan urutan baris ###
-MeatIn <- cbind(dataCust$data.MntMeatProducts, dataCust$data.Income)
-
-# Menghitung WCSS untuk berbagai jumlah kluster
-wcss <- vector()
-for (i in 1:10) {
-  kmeans_fit <- kmeans(MeatIn, centers = i, nstart = 10)
-  wcss[i] <- kmeans_fit$tot.withinss
-}
-
-# Menampilkan grafik elbow method
-plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
-
-# Menerapkan algoritme kmeans pada MeatIncome
-MeatIn_km <- kmeans(MeatIn, 6, nstart = 25)
-print(MeatIn_km)
-
-# Menggabungkan hasil klasterisasi dengan dataset MeatIncome
-MeatIn_clustered <- data.frame(MeatIn, Cluster = MeatIn_km$cluster)
-
-# Convert Cluster variable ke factor
-MeatIn_clustered$Cluster <- factor(MeatIn_clustered$Cluster)
-
-# Plot hasil klasterisasi dengan label yang sesuai
-ggplot(MeatIn_clustered, aes(x = dataCust$data.MntMeatProducts, y = dataCust$data.Income, color = Cluster)) +
-  geom_point() +
-  scale_color_manual(values = rainbow(6)) +
-  theme_bw() +
-  labs(x = "Pembelian Produk Meat", y = "Income")
-
-### 7. Menggabungkan data produk meat dan Spending berdasarkan urutan baris ###
-MeatSpn <- cbind(dataCust$data.MntMeatProducts, dataCust$data.Spending)
-
-# Menghitung WCSS untuk berbagai jumlah kluster
-wcss <- vector()
-for (i in 1:10) {
-  kmeans_fit <- kmeans(MeatSpn, centers = i, nstart = 10)
-  wcss[i] <- kmeans_fit$tot.withinss
-}
-
-# Menampilkan grafik elbow method
-plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
-
-# Menerapkan algoritme kmeans pada MeatSpending
-MeatSpn_km <- kmeans(MeatSpn, 3, nstart = 25)
-print(MeatSpn_km)
-
-# Menggabungkan hasil klasterisasi dengan dataset MeatSpending
-MeatSpn_clustered <- data.frame(MeatSpn, Cluster = MeatSpn_km$cluster)
-
-# Convert Cluster variable ke factor
-MeatSpn_clustered$Cluster <- factor(MeatSpn_clustered$Cluster)
-
-# Plot hasil klasterisasi dengan label yang sesuai
-ggplot(MeatSpn_clustered, aes(x = dataCust$data.MntMeatProducts, y = dataCust$data.Spending, color = Cluster)) +
-  geom_point() +
-  scale_color_manual(values = rainbow(3)) +
-  theme_bw() +
-  labs(x = "Pembelian Produk Meat", y = "Spending")
-
-
-### CUSTOMER PERSONALITY UNTUK PEMBELIAN FISH PRODUCTS ###
-### 1. Menggabungkan data produk fish dan age berdasarkan urutan baris ###
-FishAge <- cbind(dataCust$data.MntFishProducts, dataCust$data.Age)
-
-# Menghitung WCSS untuk berbagai jumlah kluster
-wcss <- vector()
-for (i in 1:10) {
-  kmeans_fit <- kmeans(FishAge, centers = i, nstart = 10)
-  wcss[i] <- kmeans_fit$tot.withinss
-}
-
-# Menampilkan grafik elbow method
-plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
-
-# Menerapkan algoritme kmeans pada FishAge
-FishAge_km <- kmeans(FishAge, 4, nstart = 25)
-print(FishAge_km)
-
-# Menggabungkan hasil klasterisasi dengan dataset FishAge
-FishAge_clustered <- data.frame(FishAge, Cluster = FishAge_km$cluster)
-
-# Convert Cluster variable ke factor
-FishAge_clustered$Cluster <- factor(FishAge_clustered$Cluster)
-
-# Plot hasil klasterisasi dengan label yang sesuai
-ggplot(FishAge_clustered, aes(x = dataCust$data.MntFishProducts, y = dataCust$data.Age, color = Cluster)) +
-  geom_point() +
-  scale_color_manual(values = rainbow(4)) +
-  theme_bw() +
-  labs(x = "Pembelian Produk Fish", y = "Age")
-
-### 2. Menggabungkan data produk Fish dan marital_Status berdasarkan urutan baris ###
-FishMS <- cbind(dataCust$data.MntFishProducts, dataCust$data.Marital_Status)
-
-# Menghitung WCSS untuk berbagai jumlah kluster
-wcss <- vector()
-for (i in 1:10) {
-  kmeans_fit <- kmeans(FishMS, centers = i, nstart = 10)
-  wcss[i] <- kmeans_fit$tot.withinss
-}
-
-# Menampilkan grafik elbow method
-plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
-
-# Menerapkan algoritme kmeans pada FishMarital_Status
-FishMS_km <- kmeans(FishMS, 2, nstart = 25)
-print(FishMS_km)
-
-# Menggabungkan hasil klasterisasi dengan dataset FishMarital_Status
-FishMS_clustered <- data.frame(FishMS, Cluster = FishMS_km$cluster)
-
-# Convert Cluster variable ke factor
-FishMS_clustered$Cluster <- factor(FishMS_clustered$Cluster)
-
-# Plot hasil klasterisasi dengan label yang sesuai
-ggplot(FishMS_clustered, aes(x = dataCust$data.MntFishProducts, y = dataCust$data.Marital_Status, color = Cluster)) +
-  geom_point() +
-  scale_color_manual(values = rainbow(2)) +
-  theme_bw() +
-  labs(x = "Pembelian Produk Fish", y = "Marital Status")
-
-
-### 3. Menggabungkan data produk Fish dan Children berdasarkan urutan baris ###
-FishCn <- cbind(dataCust$data.MntFishProducts, dataCust$data.Children)
-
-# Menghitung WCSS untuk berbagai jumlah kluster
-wcss <- vector()
-for (i in 1:10) {
-  kmeans_fit <- kmeans(FishCn, centers = i, nstart = 10)
-  wcss[i] <- kmeans_fit$tot.withinss
-}
-
-# Menampilkan grafik elbow method
-plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
-
-# Menerapkan algoritme kmeans pada MeatChildren
-FishCn_km <- kmeans(FishCn, 6, nstart = 25)
-print(FishCn_km)
-
-# Menggabungkan hasil klasterisasi dengan dataset FishChildren
-FishCn_clustered <- data.frame(FishCn, Cluster = FishCn_km$cluster)
-
-# Convert Cluster variable ke factor
-FishCn_clustered$Cluster <- factor(FishCn_clustered$Cluster)
-
-# Plot hasil klasterisasi dengan label yang sesuai
-ggplot(FishCn_clustered, aes(x = dataCust$data.MntFishProducts, y = dataCust$data.Children, color = Cluster)) +
-  geom_point() +
-  scale_color_manual(values = rainbow(6)) +
-  theme_bw() +
-  labs(x = "Pembelian Produk Fish", y = "Children")
-
-
-### 4. Menggabungkan data produk Fish dan Education berdasarkan urutan baris ###
-FishEd <- cbind(dataCust$data.MntFishProducts, dataCust$data.Education)
-
-# Menghitung WCSS untuk berbagai jumlah kluster
-wcss <- vector()
-for (i in 1:10) {
-  kmeans_fit <- kmeans(FishEd, centers = i, nstart = 10)
-  wcss[i] <- kmeans_fit$tot.withinss
-}
-
-# Menampilkan grafik elbow method
-plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
-
-# Menerapkan algoritme kmeans pada FishEducation
-FishEd_km <- kmeans(FishEd, 2, nstart = 25)
-print(FishEd_km)
-
-# Menggabungkan hasil klasterisasi dengan dataset FishEducation
-FishEd_clustered <- data.frame(FishEd, Cluster = FishEd_km$cluster)
-
-# Convert Cluster variable ke factor
-FishEd_clustered$Cluster <- factor(FishEd_clustered$Cluster)
-
-# Plot hasil klasterisasi dengan label yang sesuai
-ggplot(FishEd_clustered, aes(x = dataCust$data.MntFishProducts, y = dataCust$data.Education, color = Cluster)) +
-  geom_point() +
-  scale_color_manual(values = rainbow(2)) +
-  theme_bw() +
-  labs(x = "Pembelian Produk Fish", y = "Education")
-
-### 5. Menggabungkan data produk Fish dan Seniority berdasarkan urutan baris ###
-FishSn <- cbind(dataCust$data.MntFishProducts, dataCust$data.Seniority)
-
-# Menghitung WCSS untuk berbagai jumlah kluster
-wcss <- vector()
-for (i in 1:10) {
-  kmeans_fit <- kmeans(FishSn, centers = i, nstart = 10)
-  wcss[i] <- kmeans_fit$tot.withinss
-}
-
-# Menampilkan grafik elbow method
-plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
-
-# Menerapkan algoritme kmeans pada FishSeniority
-FishSn_km <- kmeans(FishSn, 5, nstart = 25)
-print(FishSn_km)
-
-# Menggabungkan hasil klasterisasi dengan dataset MeatSeniority
-FishSn_clustered <- data.frame(FishSn, Cluster = FishSn_km$cluster)
-
-# Convert Cluster variable ke factor
-FishSn_clustered$Cluster <- factor(FishSn_clustered$Cluster)
-
-# Plot hasil klasterisasi dengan label yang sesuai
-ggplot(FishSn_clustered, aes(x = dataCust$data.MntFishProducts, y = dataCust$data.Seniority, color = Cluster)) +
-  geom_point() +
-  scale_color_manual(values = rainbow(5)) +
-  theme_bw() +
-  labs(x = "Pembelian Produk Fish", y = "Seniority (Member)")
-
-
-### 6. Menggabungkan data produk Fish dan Income berdasarkan urutan baris ###
-FishIn <- cbind(dataCust$data.MntFishProducts, dataCust$data.Income)
-
-# Menghitung WCSS untuk berbagai jumlah kluster
-wcss <- vector()
-for (i in 1:10) {
-  kmeans_fit <- kmeans(FishIn, centers = i, nstart = 10)
-  wcss[i] <- kmeans_fit$tot.withinss
-}
-
-# Menampilkan grafik elbow method
-plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
-
-# Menerapkan algoritme kmeans pada FishIncome
-FishIn_km <- kmeans(MeatIn, 6, nstart = 25)
-print(FishIn_km)
-
-# Menggabungkan hasil klasterisasi dengan dataset MeatIncome
-FishIn_clustered <- data.frame(FishIn, Cluster = FishIn_km$cluster)
-
-# Convert Cluster variable ke factor
-FishIn_clustered$Cluster <- factor(FishIn_clustered$Cluster)
-
-# Plot hasil klasterisasi dengan label yang sesuai
-ggplot(FishIn_clustered, aes(x = dataCust$data.MntFishProducts, y = dataCust$data.Income, color = Cluster)) +
-  geom_point() +
-  scale_color_manual(values = rainbow(6)) +
-  theme_bw() +
-  labs(x = "Pembelian Produk Fish", y = "Income")
-
-### 7. Menggabungkan data produk Fish dan Spending berdasarkan urutan baris ###
-FishSpn <- cbind(dataCust$data.MntFishProducts, dataCust$data.Spending)
-
-# Menghitung WCSS untuk berbagai jumlah kluster
-wcss <- vector()
-for (i in 1:10) {
-  kmeans_fit <- kmeans(FishSpn, centers = i, nstart = 10)
-  wcss[i] <- kmeans_fit$tot.withinss
-}
-
-# Menampilkan grafik elbow method
-plot(1:10, wcss, type = "b", xlab = "Jumlah kluster", ylab = "WCSS")
-
-# Menerapkan algoritme kmeans pada FishSpending
-FishSpn_km <- kmeans(FishSpn, 3, nstart = 25)
-print(FishSpn_km)
-
-# Menggabungkan hasil klasterisasi dengan dataset FishSpending
-FishSpn_clustered <- data.frame(FishSpn, Cluster = FishSpn_km$cluster)
-
-# Convert Cluster variable ke factor
-FishSpn_clustered$Cluster <- factor(FishSpn_clustered$Cluster)
-
-# Plot hasil klasterisasi dengan label yang sesuai
-ggplot(MeatSpn_clustered, aes(x = dataCust$data.MntFishProducts, y = dataCust$data.Spending, color = Cluster)) +
-  geom_point() +
-  scale_color_manual(values = rainbow(3)) +
-  theme_bw() +
-  labs(x = "Pembelian Produk Fish", y = "Spending")
 
