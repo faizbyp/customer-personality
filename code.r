@@ -6,7 +6,7 @@ library(ggplotify)
 library(dplyr)
 library(utils)
 library(plotly)
-
+library(mice)
 
 # Baca data
 data <- read.csv("marketing_campaign.csv", sep = "\t", header = TRUE)
@@ -47,9 +47,7 @@ dataCust$Age <- as.numeric(dataCust$Age)
 dataCust$Age <- cut(dataCust$Age, breaks = c(0, 61, 96, 130), labels = c(1, 2, 3))
 
 # Cek missing value
-library(mice)
 md.pattern(dataCust)
-
 
 # Isi nilai missing value
 dataCust$Income[is.na(dataCust$Income)] <- mean(dataCust$Income, na.rm = TRUE)
@@ -71,7 +69,6 @@ dataCust$Education <- as.integer(dataCust$Education)
 # 1=Single; 2=Married
 dataCust$Marital_Status <- recode(dataCust$Marital_Status, "Single" = 1, "Married" = 2)
 dataCust$Marital_Status <- as.integer(dataCust$Marital_Status)
-
 
 summary(dataCust)
 str(dataCust)
@@ -104,8 +101,8 @@ df_wss <- data.frame(Clusters = 1:10, WSS = wss)
 ggplot(df_wss, aes(x = Clusters, y = WSS)) +
   geom_line() +
   geom_point() +
-  labs(x = "Number of Clusters", y = "Total Within-Cluster Sum of Squares") +
-  ggtitle("Elbow Method") +
+  labs(x = "Jumlah Cluster", y = "Total WCSS") +
+  ggtitle("Metode Elbow") +
   theme_minimal()
 
 set.seed(123)
@@ -136,7 +133,6 @@ summary_data <- aggregate(dataCust[, c("Age", "Marital_Status", "Children", "Inc
 summary_data <- summary_data[, -1]  
 
 # Jumlah kategori produk tiap cluster
-
 product_purchases <- dataCust %>%
   group_by(Cluster) %>%
   summarize(
@@ -149,12 +145,24 @@ product_purchases <- dataCust %>%
   )
 print(product_purchases)
 
+# Visualisasi jumlah pelanggan vs. banyaknya pembelian produk
+ggplot(product_purchases, aes(x = Cluster)) +
+  geom_bar(aes(y = Total_Wines), fill = "dark blue", stat = "identity") +
+  geom_bar(aes(y = Total_Fruits), fill = "green", stat = "identity") +
+  geom_bar(aes(y = Total_MeatProducts), fill = "red", stat = "identity") +
+  geom_bar(aes(y = Total_FishProducts), fill = "yellow", stat = "identity") +
+  geom_bar(aes(y = Total_SweetProducts), fill = "purple", stat = "identity") +
+  geom_bar(aes(y = Total_GoldProds), fill = "yellow", stat = "identity") +
+  labs(x = "Cluster", y = "Total Pembelian Produk", fill = "Product Category") +
+  ggtitle("Bar Plot of Pembelian Produk by Cluster") +
+  theme_minimal()
+
 ## kesimpulan 
 ## Pada cluster 1 memiliki pembelian produk yang relatif rendah untuk semua kategori produk, terdapat
 ## penurunan dalam pembelian Total_Wines, Total_Fruits, Total_MeatProducts, Total_FishProducts, Total_SweetProducts, dan Total_GoldProds dibandingkan dengan rata-rata total pembelian.
 ## Cluster 2 memiliki pembelian produk yang relatif tinggi untuk sebagian kategori produk. Menunjukkan peningkatan
 ## signifikan dalam pembelian Total_Wines, Total_Fruits, Total_MeatProducts, Total_FishProducts, Total_SweetProducts, dan Total_GoldProds dibandingkan dengan rata-rata total pembelian. 
-## Cluster 3  memiliki pembelian produk yang rendah untuk beberapa kategori produk, terutama Total_Wines, Total_MeatProducts, Total_FishProducts, dan Total_SweetProducts. Hanya pada kategori Total_Fruits dan Total_GoldProds terdapat sedikit peningkatan dalam pembelian dibandingkan dengan rata-rata total pembelian
+## Cluster 3  memiliki pembelian produk yang paling rendah untuk beberapa kategori produk, terutama Total_Wines, Total_MeatProducts, Total_FishProducts, dan Total_SweetProducts. Hanya pada kategori Total_Fruits dan Total_GoldProds terdapat sedikit peningkatan dalam pembelian dibandingkan dengan rata-rata total pembelian
 
 # Visualisasi jumlah pelanggan berdasarkan atribut age di setiap cluster
 age_cluster_data <- as.data.frame.table(age_cluster_data)
@@ -166,7 +174,6 @@ ggplot(age_cluster_data, aes(x = Age, y = Frequency, fill = Cluster)) +
   labs(x = "Age", y = "Frequency", fill = "Cluster") +
   ggtitle("Bar Plot of Age by Cluster") +
   theme_minimal()
-
 
 # Visualisasi Box Plot Income dengan ketiga cluster
 ggplot(dataCust, aes(x = Cluster, y = Income)) +
@@ -207,7 +214,6 @@ ggplot(dataCust, aes(x = Income, y = Spending, color = Cluster)) +
 ##Cluster 2: Pada cluster ini, terdapat titik-titik yang berada pada pendapatan menengah dan pengeluaran paling tinggi.
 ##Cluster 3: Pada cluster ini, terdapat titik-titik yang cenderung berada pada pendapatan tinggi dan pengeluaran paling rendah.
 
-
 # Visualisasi Bar Plot
 barplot_data <- table(dataCust$Cluster, dataCust$Marital_Status)
 barplot(barplot_data, beside = TRUE, legend = TRUE,
@@ -216,7 +222,6 @@ barplot(barplot_data, beside = TRUE, legend = TRUE,
 ##kesimpulan = Pada barplot terlihat kategori married memiliki tinggi batang yang lebih dari kategori single
 ## Menunjukkakn proporsi individu pelanggan yang memiliki status perkawinan menikah / married lebih tinggi dari yang belum menikah / single
 ## Terdapat sedikit perbedaan dalam frekuensi antara kategori married dan single di setiap cluster, namun tidak signifikan.
-
 
 # Visualisasi Scatter Plot Seniority Vs. Spending di ketiga cluster
 ggplot(dataCust, aes(x = Spending, y = Seniority, color = Cluster)) +
