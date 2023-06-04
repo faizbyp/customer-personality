@@ -252,5 +252,10 @@ barplot(barplot_data, beside = TRUE, legend = TRUE,
 #  ggtitle("Bar Plot of Pembelian Produk by Cluster") +
 #  theme_minimal()
 
-
+# Visualisasi tingkat seniority berdasarkan cluster
+ggplot(dataCust, aes(x = Cluster, y = Seniority, color = Cluster)) +
+  geom_point() +
+  labs(x = "Cluster", y = "Seniority", color = "Cluster") +
+  ggtitle("Scatter Plot of Seniority by Cluster") +
+  theme_minimal()
 
