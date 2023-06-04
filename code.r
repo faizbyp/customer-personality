@@ -149,7 +149,7 @@ ggplot(product_purchases, aes(x = Cluster)) +
   geom_bar(aes(y = Total_MeatProducts), fill = "red", stat = "identity") +
   geom_bar(aes(y = Total_FishProducts), fill = "yellow", stat = "identity") +
   geom_bar(aes(y = Total_SweetProducts), fill = "purple", stat = "identity") +
-  geom_bar(aes(y = Total_GoldProds), fill = "yellow", stat = "identity") +
+  geom_bar(aes(y = Total_GoldProds), fill = "blue", stat = "identity") +
   labs(x = "Cluster", y = "Total Pembelian Produk", fill = "Product Category") +
   ggtitle("Bar Plot of Pembelian Produk by Cluster") +
   theme_minimal()
