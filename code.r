@@ -233,8 +233,23 @@ ggplot(dataCust, aes(x = Spending, y = Seniority, color = Cluster)) +
 ## produknya (spending) semakin banyak
 ## Tidak menunjukkan adanya hubungan khusus antara lama pelanggan menjadi member (Seniority) dan total pembelian produk (Spending)
 
+# Visualisasi jumlah pelanggan vs. banyaknya pembelian produk wines, fishprods, goldprods
+ggplot(product_purchases, aes(x = Cluster)) +
+  geom_bar(aes(y = Total_Wines), fill = "dark blue", stat = "identity") +
+  geom_bar(aes(y = Total_FishProducts), fill = "yellow", stat = "identity") +
+  geom_bar(aes(y = Total_GoldProds), fill = "blue", stat = "identity") +
+  labs(x = "Cluster", y = "Total Pembelian Produk", fill = "Product Category") +
+  ggtitle("Bar Plot of Pembelian Produk by Cluster") +
+  theme_minimal()
 
-
+# Visualisasi jumlah pelanggan vs. banyaknya pembelian produk fruits, sweetprods, meatprods
+ggplot(product_purchases, aes(x = Cluster)) +
+  geom_bar(aes(y = Total_Fruits), fill = "green", stat = "identity") +
+  geom_bar(aes(y = Total_SweetProducts), fill = "purple", stat = "identity") +
+  geom_bar(aes(y = Total_MeatProducts), fill = "red", stat = "identity") +
+  labs(x = "Cluster", y = "Total Pembelian Produk", fill = "Product Category") +
+  ggtitle("Bar Plot of Pembelian Produk by Cluster") +
+  theme_minimal()
 
 
 
