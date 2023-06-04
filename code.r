@@ -159,6 +159,18 @@ ggplot(product_purchases, aes(x = Cluster)) +
   ggtitle("Bar Plot of Pembelian Produk by Cluster") +
   theme_minimal()
 
+# Seluruh produk disatukan
+ggplot(product_purchases, aes(x = Cluster)) +
+  geom_bar(aes(y = Total_Wines), fill = "dark blue", stat = "identity") +
+  geom_bar(aes(y = Total_FishProducts), fill = "yellow", stat = "identity") +
+  geom_bar(aes(y = Total_Fruits), fill = "green", stat = "identity") +
+  geom_bar(aes(y = Total_SweetProducts), fill = "purple", stat = "identity") +
+  geom_bar(aes(y = Total_MeatProducts), fill = "red", stat = "identity") +
+  geom_bar(aes(y = Total_GoldProds), fill = "blue", stat = "identity") +
+  labs(x = "Cluster", y = "Total Pembelian Produk", fill = "Product Category") +
+  ggtitle("Bar Plot of Pembelian Produk by Cluster") +
+  theme_minimal()
+
 ## kesimpulan 
 ## Pada cluster 1 memiliki pembelian produk yang relatif rendah untuk semua kategori produk, terdapat
 ## penurunan dalam pembelian Total_Wines, Total_Fruits, Total_MeatProducts, Total_FishProducts, Total_SweetProducts, dan Total_GoldProds dibandingkan dengan rata-rata total pembelian.
