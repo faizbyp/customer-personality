@@ -225,11 +225,11 @@ barplot(barplot_data, beside = TRUE, legend = TRUE,
 ## Terdapat sedikit perbedaan dalam frekuensi antara kategori married dan single di setiap cluster, namun tidak signifikan.
 
 # Visualisasi Scatter Plot Seniority Vs. Spending di ketiga cluster
-ggplot(dataCust, aes(x = Spending, y = Seniority, color = Cluster)) +
-  geom_point() +
-  labs(x = "Spending", y = "Seniority", color = "Cluster") +
-  ggtitle("Scatter Plot of Seniority vs. Spending by Cluster") +
-  theme_minimal()
+#ggplot(dataCust, aes(x = Spending, y = Seniority, color = Cluster)) +
+#  geom_point() +
+#  labs(x = "Spending", y = "Seniority", color = "Cluster") +
+#  ggtitle("Scatter Plot of Seniority vs. Spending by Cluster") +
+#  theme_minimal()
 ## kesimpulan = terlihat titik-titik dalam setiap cluster semakin menyebar jika jumlah pembelian
 ## produknya (spending) semakin banyak
 ## Tidak menunjukkan adanya hubungan khusus antara lama pelanggan menjadi member (Seniority) dan total pembelian produk (Spending)
