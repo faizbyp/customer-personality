@@ -145,11 +145,16 @@ print(product_purchases)
 # Visualisasi jumlah pelanggan vs. banyaknya pembelian produk
 ggplot(product_purchases, aes(x = Cluster)) +
   geom_bar(aes(y = Total_Wines), fill = "dark blue", stat = "identity") +
-  geom_bar(aes(y = Total_Fruits), fill = "green", stat = "identity") +
-  geom_bar(aes(y = Total_MeatProducts), fill = "red", stat = "identity") +
   geom_bar(aes(y = Total_FishProducts), fill = "yellow", stat = "identity") +
-  geom_bar(aes(y = Total_SweetProducts), fill = "purple", stat = "identity") +
   geom_bar(aes(y = Total_GoldProds), fill = "blue", stat = "identity") +
+  labs(x = "Cluster", y = "Total Pembelian Produk", fill = "Product Category") +
+  ggtitle("Bar Plot of Pembelian Produk by Cluster") +
+  theme_minimal()
+
+ggplot(product_purchases, aes(x = Cluster)) +
+  geom_bar(aes(y = Total_Fruits), fill = "green", stat = "identity") +
+  geom_bar(aes(y = Total_SweetProducts), fill = "purple", stat = "identity") +
+  geom_bar(aes(y = Total_MeatProducts), fill = "red", stat = "identity") +
   labs(x = "Cluster", y = "Total Pembelian Produk", fill = "Product Category") +
   ggtitle("Bar Plot of Pembelian Produk by Cluster") +
   theme_minimal()
