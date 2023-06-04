@@ -167,33 +167,33 @@ ggplot(product_purchases, aes(x = Cluster)) +
 ## Cluster 3  memiliki pembelian produk yang paling rendah untuk beberapa kategori produk, terutama Total_Wines, Total_MeatProducts, Total_FishProducts, dan Total_SweetProducts. Hanya pada kategori Total_Fruits dan Total_GoldProds terdapat sedikit peningkatan dalam pembelian dibandingkan dengan rata-rata total pembelian
 
 # Visualisasi jumlah pelanggan berdasarkan atribut age di setiap cluster
-age_cluster_data <- as.data.frame.table(age_cluster_data)
-names(age_cluster_data) <- c("Age", "Cluster", "Frequency")
+# age_cluster_data <- as.data.frame.table(age_cluster_data)
+# names(age_cluster_data) <- c("Age", "Cluster", "Frequency")
 
 # Membuat bar plot menggunakan ggplot
-ggplot(age_cluster_data, aes(x = Age, y = Frequency, fill = Cluster)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Age", y = "Frequency", fill = "Cluster") +
-  ggtitle("Bar Plot of Age by Cluster") +
-  theme_minimal()
+# ggplot(age_cluster_data, aes(x = Age, y = Frequency, fill = Cluster)) +
+# geom_bar(stat = "identity", position = "dodge") +
+# labs(x = "Age", y = "Frequency", fill = "Cluster") +
+# ggtitle("Bar Plot of Age by Cluster") +
+# theme_minimal()
 
 # Visualisasi Box Plot Income dengan ketiga cluster
-ggplot(dataCust, aes(x = Cluster, y = Income)) +
-  geom_boxplot() +
-  labs(x = "Cluster", y = "Income") +
-  ggtitle("Box Plot of Income by Cluster") +
-  theme_minimal()
+# ggplot(dataCust, aes(x = Cluster, y = Income)) +
+#  geom_boxplot() +
+#  labs(x = "Cluster", y = "Income") +
+#  ggtitle("Box Plot of Income by Cluster") +
+#  theme_minimal()
 ## kesimpulan =
 ## Pemasukan di cluster 1 lebih rendah.
 ## Median pada boxplot menujukkan median pendapatan pada ketiga cluster realtif serupa.
 ## Upper whisker yang lebih panjang pada cluster 3 menujukkan bahwa adanya beberapa pelanggan di cluster 3 yang memiliki pendapatan lebih tinggi dibandingkan dengan mayoritas pelanggan di cluster tersebut.
 
 # Visualisasi Box Plot Spending dengan ketiga cluster
-ggplot(dataCust, aes(x = Cluster, y = Spending)) +
-  geom_boxplot() +
-  labs(x = "Cluster", y = "Spending") +
-  ggtitle("Box Plot of Spending by Cluster") +
-  theme_minimal()
+# ggplot(dataCust, aes(x = Cluster, y = Spending)) +
+#  geom_boxplot() +
+#  labs(x = "Cluster", y = "Spending") +
+#  ggtitle("Box Plot of Spending by Cluster") +
+#  theme_minimal()
 ## kesimpulan =
 ## terdapat perbedaan dalam pola pengeluaran antara ketiga cluster.
 ## Cluster 2 cenderung memiliki pengluaran lebih tinggi sedangkan cluster 3 paling rendah.
@@ -202,12 +202,11 @@ ggplot(dataCust, aes(x = Cluster, y = Spending)) +
 ## Cluster 2 memiliki variabilitas lebih besar dalam pengeluaran dibandingkan dengan cluster 1 dan 3.
 
 # Visualisasi Scatter Plot Income dan Spending ketiga cluster pelanggan
-library(ggplot2)
-ggplot(dataCust, aes(x = Income, y = Spending, color = Cluster)) +
-  geom_point() +
-  labs(x = "Income", y = "Spending", color = "Cluster") +
-  ggtitle("Scatter Plot of Income vs. Spending by Cluster") +
-  theme_minimal()
+# ggplot(dataCust, aes(x = Income, y = Spending, color = Cluster)) +
+#  geom_point() +
+#  labs(x = "Income", y = "Spending", color = "Cluster") +
+#  ggtitle("Scatter Plot of Income vs. Spending by Cluster") +
+#  theme_minimal()
 ## kesimpulan = terlihat titik-titik dalam setiap cluster menaik
 ## seiring dengan naiknya pendapatan dan pengeluaran.
 ## Menujukkan adanya hubungan positif anatara pendapatan dan pengeluaran.
@@ -236,22 +235,22 @@ ggplot(dataCust, aes(x = Spending, y = Seniority, color = Cluster)) +
 ## Tidak menunjukkan adanya hubungan khusus antara lama pelanggan menjadi member (Seniority) dan total pembelian produk (Spending)
 
 # Visualisasi jumlah pelanggan vs. banyaknya pembelian produk wines, fishprods, goldprods
-ggplot(product_purchases, aes(x = Cluster)) +
-  geom_bar(aes(y = Total_Wines), fill = "dark blue", stat = "identity") +
-  geom_bar(aes(y = Total_FishProducts), fill = "yellow", stat = "identity") +
-  geom_bar(aes(y = Total_GoldProds), fill = "blue", stat = "identity") +
-  labs(x = "Cluster", y = "Total Pembelian Produk", fill = "Product Category") +
-  ggtitle("Bar Plot of Pembelian Produk by Cluster") +
-  theme_minimal()
+# ggplot(product_purchases, aes(x = Cluster)) +
+#  geom_bar(aes(y = Total_Wines), fill = "dark blue", stat = "identity") +
+#  geom_bar(aes(y = Total_FishProducts), fill = "yellow", stat = "identity") +
+#  geom_bar(aes(y = Total_GoldProds), fill = "blue", stat = "identity") +
+#  labs(x = "Cluster", y = "Total Pembelian Produk", fill = "Product Category") +
+#  ggtitle("Bar Plot of Pembelian Produk by Cluster") +
+#  theme_minimal()
 
 # Visualisasi jumlah pelanggan vs. banyaknya pembelian produk fruits, sweetprods, meatprods
-ggplot(product_purchases, aes(x = Cluster)) +
-  geom_bar(aes(y = Total_Fruits), fill = "green", stat = "identity") +
-  geom_bar(aes(y = Total_SweetProducts), fill = "purple", stat = "identity") +
-  geom_bar(aes(y = Total_MeatProducts), fill = "red", stat = "identity") +
-  labs(x = "Cluster", y = "Total Pembelian Produk", fill = "Product Category") +
-  ggtitle("Bar Plot of Pembelian Produk by Cluster") +
-  theme_minimal()
+# ggplot(product_purchases, aes(x = Cluster)) +
+#  geom_bar(aes(y = Total_Fruits), fill = "green", stat = "identity") +
+#  geom_bar(aes(y = Total_SweetProducts), fill = "purple", stat = "identity") +
+#  geom_bar(aes(y = Total_MeatProducts), fill = "red", stat = "identity") +
+#  labs(x = "Cluster", y = "Total Pembelian Produk", fill = "Product Category") +
+#  ggtitle("Bar Plot of Pembelian Produk by Cluster") +
+#  theme_minimal()
 
 
 
