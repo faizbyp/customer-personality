@@ -1,0 +1,83 @@
+---
+title: "Segmentasi Pelanggan Untuk Optimasi Target Pemasaran Menggunakan Algoritma K-Means Clustering"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Memasang library yang diperlukan
+
+```{r error=FALSE, warning=FALSE, message=FALSE}
+library(cluster)
+library(factoextra)
+library(ggplot2)
+library(ggplotify)
+library(dplyr)
+library(utils)
+library(plotly)
+library(mice)
+```
+
+Membaca data
+
+```{r}
+data <- read.csv("marketing_campaign.csv", sep = "\t", header = TRUE)
+```
+
+## Eksplorasi Data
+
+### Membuat atribut baru
+
+```{r}
+# Membuat atribut age untuk mengetahui usia customer
+data$Age <- NULL
+data$Age <- 2023-data$Year_Birth
+
+# Membuat atribut spending untuk mengetahui total produk yang sudah dibeli
+data$Spending <- NULL
+data$Spending <- data$MntWines+data$MntFruits+data$MntMeatProducts+
+  data$MntFishProducts+data$MntSweetProducts+data$MntGoldProds
+
+# Membuat atribut Children untuk mengetahui jumlah anak yang dimiliki
+data$Children <- NULL
+data$Children <- data$Kidhome+data$Teenhome
+
+# Membuat atribut Seniority untuk mengetahui lama waktu seseorang menjadi customer di perusahaan ini
+data$Seniority <- NULL
+now <- as.Date('1-5-2023',format='%d-%m-%Y')
+data$Dt_Customer <- as.Date(data$Dt_Customer, format='%d-%m-%Y')
+data$Seniority <- as.integer(now - data$Dt_Customer)
+```
+
+```{r}
+# Memilih atribut yang diperlukan
+dataCust <- data %>%
+  select(Age, Marital_Status, Children, Education, Seniority, Income, Spending,
+         MntWines, MntFruits, MntMeatProducts, MntFishProducts, MntSweetProducts, MntGoldProds)
+
+# Memilih Marital_Status yang bernilai Single dan Married
+dataCust <- subset(dataCust, Marital_Status %in% c("Single", "Married"))
+```
+
+### Diskretisasi atribut Age
+
+```{r}
+# 1 = Dewasa (27-61); 2 = Lansia (62-96); 3 = Manula (97-130)
+dataCust$Age <- as.numeric(dataCust$Age)
+dataCust$Age <- cut(dataCust$Age, breaks = c(0, 61, 96, 130), labels = c(1, 2, 3))
+```
+
+### Memeriksa missing value
+
+```{r}
+md.pattern(dataCust)
+```
+
+### Mengisi nilai missing value dengan rata-rata
+
+```{r}
+dataCust$Income[is.na(dataCust$Income)] <- mean(dataCust$Income, na.rm = TRUE)
+md.pattern(dataCust)
+```
