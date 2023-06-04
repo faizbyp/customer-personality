@@ -93,9 +93,6 @@ dataCust$Age <- as.numeric(as.character(dataCust$Age))
 dataCust$Marital_Status <- as.numeric(dataCust$Marital_Status)
 dataCust$Children <- as.numeric(dataCust$Children)
 
-# Standarisasi atribut numerik
-dataCust[, c("Income", "Spending", "MntWines", "MntFruits", "MntMeatProducts", "MntFishProducts", "MntSweetProducts", "MntGoldProds")] <- scale(dataCust[, c("Income", "Spending", "MntWines", "MntFruits", "MntMeatProducts", "MntFishProducts", "MntSweetProducts", "MntGoldProds")])
-
 # Metode Elbow
 df_wss <- data.frame(Clusters = 1:10, WSS = wss)
 ggplot(df_wss, aes(x = Clusters, y = WSS)) +
