@@ -81,3 +81,42 @@ Mengisi nilai missing value dengan rata-rata
 dataCust$Income[is.na(dataCust$Income)] <- mean(dataCust$Income, na.rm = TRUE)
 md.pattern(dataCust)
 ```
+
+Inisialisasi data kategorik
+
+```{r}
+# Atribut Education
+# 1=undergraduated; 2=postgraduated
+dataCust$Education[which(dataCust$Education=="Basic")] <- 1
+dataCust$Education[which(dataCust$Education=="2n Cycle")] <- 1
+dataCust$Education[which(dataCust$Education=="Graduation")] <- 2
+dataCust$Education[which(dataCust$Education=="Master")] <- 2
+dataCust$Education[which(dataCust$Education=="PhD")] <- 2
+dataCust$Education <- as.integer(dataCust$Education)
+
+# Atribut Marital Status
+# 1=Single; 2=Married
+dataCust$Marital_Status <- recode(dataCust$Marital_Status, "Single" = 1, "Married" = 2)
+dataCust$Marital_Status <- as.integer(dataCust$Marital_Status)
+```
+
+Normalisasi
+
+```{r}
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+dataCust$Income <- normalize(dataCust$Income)
+dataCust$Spending <- normalize(dataCust$Spending)
+dataCust$MntWines <- normalize(dataCust$MntWines)
+dataCust$MntFruits <- normalize(dataCust$MntFruits)
+dataCust$MntMeatProducts <- normalize(dataCust$MntMeatProducts)
+dataCust$MntFishProducts <- normalize(dataCust$MntFishProducts)
+dataCust$MntSweetProducts <- normalize(dataCust$MntSweetProducts)
+dataCust$MntGoldProds <- normalize(dataCust$MntGoldProds)
+```
+
+```{r}
+summary(dataCust)
+str(dataCust)
+```

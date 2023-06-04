@@ -246,6 +246,69 @@ md.pattern(dataCust)</code></pre>
 ##      MntFruits MntMeatProducts MntFishProducts MntSweetProducts MntGoldProds  
 ## 1344         1               1               1                1            1 0
 ##              0               0               0                0            0 0</code></pre>
+<p>Inisialisasi data kategorik</p>
+<pre class="r"><code># Atribut Education
+# 1=undergraduated; 2=postgraduated
+dataCust$Education[which(dataCust$Education==&quot;Basic&quot;)] &lt;- 1
+dataCust$Education[which(dataCust$Education==&quot;2n Cycle&quot;)] &lt;- 1
+dataCust$Education[which(dataCust$Education==&quot;Graduation&quot;)] &lt;- 2
+dataCust$Education[which(dataCust$Education==&quot;Master&quot;)] &lt;- 2
+dataCust$Education[which(dataCust$Education==&quot;PhD&quot;)] &lt;- 2
+dataCust$Education &lt;- as.integer(dataCust$Education)
+
+# Atribut Marital Status
+# 1=Single; 2=Married
+dataCust$Marital_Status &lt;- recode(dataCust$Marital_Status, &quot;Single&quot; = 1, &quot;Married&quot; = 2)
+dataCust$Marital_Status &lt;- as.integer(dataCust$Marital_Status)</code></pre>
+<p>Normalisasi</p>
+<pre class="r"><code>normalize &lt;- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+dataCust$Income &lt;- normalize(dataCust$Income)
+dataCust$Spending &lt;- normalize(dataCust$Spending)
+dataCust$MntWines &lt;- normalize(dataCust$MntWines)
+dataCust$MntFruits &lt;- normalize(dataCust$MntFruits)
+dataCust$MntMeatProducts &lt;- normalize(dataCust$MntMeatProducts)
+dataCust$MntFishProducts &lt;- normalize(dataCust$MntFishProducts)
+dataCust$MntSweetProducts &lt;- normalize(dataCust$MntSweetProducts)
+dataCust$MntGoldProds &lt;- normalize(dataCust$MntGoldProds)</code></pre>
+<pre class="r"><code>summary(dataCust)</code></pre>
+<pre><code>##  Age      Marital_Status     Children       Education       Seniority   
+##  1:1006   Min.   :1.000   Min.   :0.000   Min.   :1.000   Min.   :3229  
+##  2: 337   1st Qu.:1.000   1st Qu.:0.000   1st Qu.:2.000   1st Qu.:3403  
+##  3:   1   Median :2.000   Median :1.000   Median :2.000   Median :3580  
+##           Mean   :1.643   Mean   :0.933   Mean   :1.884   Mean   :3579  
+##           3rd Qu.:2.000   3rd Qu.:1.000   3rd Qu.:2.000   3rd Qu.:3757  
+##           Max.   :2.000   Max.   :3.000   Max.   :2.000   Max.   :3927  
+##      Income          Spending         MntWines         MntFruits      
+##  Min.   :0.0000   Min.   :0.0000   Min.   :0.00000   Min.   :0.00000  
+##  1st Qu.:0.2043   1st Qu.:0.0253   1st Qu.:0.01474   1st Qu.:0.01005  
+##  Median :0.3074   Median :0.1468   Median :0.10918   Median :0.04020  
+##  Mean   :0.3096   Mean   :0.2347   Mean   :0.19792   Mean   :0.13130  
+##  3rd Qu.:0.4146   3rd Qu.:0.4053   3rd Qu.:0.32351   3rd Qu.:0.16583  
+##  Max.   :1.0000   Max.   :1.0000   Max.   :1.00000   Max.   :1.00000  
+##  MntMeatProducts    MntFishProducts   MntSweetProducts    MntGoldProds    
+##  Min.   :0.000000   Min.   :0.00000   Min.   :0.000000   Min.   :0.00000  
+##  1st Qu.:0.008121   1st Qu.:0.01181   1st Qu.:0.003802   1st Qu.:0.02486  
+##  Median :0.036543   Median :0.04724   Median :0.030418   Median :0.06354  
+##  Mean   :0.097061   Mean   :0.14328   Mean   :0.102288   Mean   :0.11919  
+##  3rd Qu.:0.131961   3rd Qu.:0.19291   3rd Qu.:0.133080   3rd Qu.:0.14917  
+##  Max.   :1.000000   Max.   :1.00000   Max.   :1.000000   Max.   :1.00000</code></pre>
+<pre class="r"><code>str(dataCust)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    1344 obs. of  13 variables:
+##  $ Age             : Factor w/ 3 levels &quot;1&quot;,&quot;2&quot;,&quot;3&quot;: 2 2 1 1 1 1 1 2 1 2 ...
+##  $ Marital_Status  : int  1 1 2 2 2 2 2 1 2 2 ...
+##  $ Children        : int  0 2 1 1 1 0 0 0 2 1 ...
+##  $ Education       : int  2 2 2 2 2 1 2 2 2 2 ...
+##  $ Seniority       : int  3891 3341 3389 3645 3454 3821 3855 3810 3780 3686 ...
+##  $ Income          : num  0.352 0.277 0.353 0.196 0.31 ...
+##  $ Spending        : num  0.63968 0.00873 0.16548 0.06508 0.00556 ...
+##  $ MntWines        : num  0.42532 0.00737 0.11587 0.0509 0.00335 ...
+##  $ MntFruits       : num  0.44221 0.00503 0.21608 0.05025 0.02513 ...
+##  $ MntMeatProducts : num  0.3161 0.0029 0.0679 0.0319 0.0029 ...
+##  $ MntFishProducts : num  0.67717 0.00787 0.1811 0.01181 0 ...
+##  $ MntSweetProducts: num  0.3346 0.0038 0.1027 0.0038 0.0076 ...
+##  $ MntGoldProds    : num  0.24309 0.01657 0.04144 0.06354 0.00276 ...</code></pre>
 </div>
 
 
