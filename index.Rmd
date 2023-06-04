@@ -26,9 +26,9 @@ Membaca data
 data <- read.csv("marketing_campaign.csv", sep = "\t", header = TRUE)
 ```
 
-## Eksplorasi Data
+## Praproses Data
 
-### Membuat atribut baru
+Membuat atribut baru
 
 ```{r}
 # Membuat atribut age untuk mengetahui usia customer
@@ -61,7 +61,7 @@ dataCust <- data %>%
 dataCust <- subset(dataCust, Marital_Status %in% c("Single", "Married"))
 ```
 
-### Diskretisasi atribut Age
+Diskretisasi atribut Age
 
 ```{r}
 # 1 = Dewasa (27-61); 2 = Lansia (62-96); 3 = Manula (97-130)
@@ -69,13 +69,13 @@ dataCust$Age <- as.numeric(dataCust$Age)
 dataCust$Age <- cut(dataCust$Age, breaks = c(0, 61, 96, 130), labels = c(1, 2, 3))
 ```
 
-### Memeriksa missing value
+Memeriksa missing value
 
 ```{r}
 md.pattern(dataCust)
 ```
 
-### Mengisi nilai missing value dengan rata-rata
+Mengisi nilai missing value dengan rata-rata
 
 ```{r}
 dataCust$Income[is.na(dataCust$Income)] <- mean(dataCust$Income, na.rm = TRUE)
